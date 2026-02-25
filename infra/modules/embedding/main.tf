@@ -4,7 +4,7 @@
 
 locals {
   function_name = "embed-bedrock-titan"
-  lambda_zip    = "${path.module}/../../ingestion/embed_lambda.zip"
+  lambda_zip    = "${path.module}/../../../ingestion/embed_lambda.zip"
 }
 
 # ── IAM Role for Lambda ───────────────────────────────────────────────────────

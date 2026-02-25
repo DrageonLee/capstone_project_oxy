@@ -1,9 +1,20 @@
-.PHONY: setup deploy deploy-collection deploy-index destroy login validate fmt clean
+.PHONY: setup build deploy deploy-collection deploy-index destroy login validate fmt clean
 
 # ── Initial Setup (install Python dependencies) ─────────────────
 setup:
 	pip3 install -r infra/modules/opensearch/scripts/requirements.txt
-	@echo "Setup complete! Next: make deploy"
+	@echo "Setup complete! Next: make build && make deploy"
+
+# ── Build Lambda zip ─────────────────────────────────────────────
+build:
+	rm -rf ingestion/embed_lambda/package
+	pip3 install -r ingestion/embed_lambda/requirements.txt \
+		-t ingestion/embed_lambda/package --quiet
+	cd ingestion/embed_lambda/package && \
+		zip -r ../embed_lambda.zip . -x "*.pyc" -x "__pycache__/*"
+	cd ingestion/embed_lambda && zip -g embed_lambda.zip handler.py
+	mv ingestion/embed_lambda/embed_lambda.zip ingestion/embed_lambda.zip
+	@echo "Lambda zip ready: ingestion/embed_lambda.zip"
 
 # ── AWS SSO Login (only needed on local, skip on SageMaker) ─────
 login:
@@ -36,4 +47,6 @@ fmt:
 # ── Local Cleanup ────────────────────────────────────────────────
 clean:
 	rm -rf infra/.terraform
+	rm -rf ingestion/embed_lambda/package
+	rm -f  ingestion/embed_lambda.zip
 	@echo "Local cache cleaned"

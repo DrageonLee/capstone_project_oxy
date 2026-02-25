@@ -16,9 +16,19 @@ module "opensearch" {
 
   data_access_principal_arns = [
     data.aws_caller_identity.current.arn,
-    # Add ingestion role ARN when available (Week 3):
-    # aws_iam_role.ingestion.arn,
+    module.embedding.lambda_role_arn,
   ]
 
   tags = var.default_tags
+}
+
+# ── Embedding Pipeline ─────────────────────────────────────────────────────
+
+module "embedding" {
+  source = "./modules/embedding"
+
+  aws_region    = var.aws_region
+  corpus_bucket = var.corpus_bucket
+  output_bucket = var.corpus_bucket  # 같은 버킷에 저장 (원하면 별도 버킷으로 분리 가능)
+  tags          = var.default_tags
 }

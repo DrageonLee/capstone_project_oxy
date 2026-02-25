@@ -23,3 +23,8 @@ variable "create_index" {
   type        = bool
   default     = false
 }
+
+variable "corpus_bucket" {
+  description = "S3 bucket name containing corpus.json and embedding outputs"
+  type        = string
+}

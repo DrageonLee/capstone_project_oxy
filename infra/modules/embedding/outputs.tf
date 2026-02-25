@@ -16,3 +16,8 @@ output "state_machine_arn" {
   description = "ARN of the Step Functions state machine"
   value       = aws_sfn_state_machine.embed.arn
 }
+
+output "lambda_role_arn" {
+  description = "ARN of the Lambda IAM role (for OpenSearch data access policy)"
+  value       = aws_iam_role.embed_lambda.arn
+}
