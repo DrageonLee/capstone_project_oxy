@@ -1,0 +1,71 @@
+{
+    "Comment": "Embedding pipeline: fans out to Lambda per batch, embeds with Bedrock Titan.",
+    "StartAt": "PrepareBatches",
+    "States": {
+        "PrepareBatches": {
+            "Type": "Pass",
+            "Parameters": {
+                "batch_size.$": "$.batch_size",
+                "batches.$": "$.batches"
+            },
+            "Next": "EmbedAllBatches"
+        },
+        "EmbedAllBatches": {
+            "Type": "Map",
+            "ItemsPath": "$.batches",
+            "MaxConcurrency": 10,
+            "Iterator": {
+                "StartAt": "EmbedBatch",
+                "States": {
+                    "EmbedBatch": {
+                        "Type": "Task",
+                        "Resource": "arn:aws:states:::lambda:invoke",
+                        "Parameters": {
+                            "FunctionName": "${embed_lambda_arn}",
+                            "Payload": {
+                                "batch_index.$": "$.batch_index",
+                                "batch_size.$": "$.batch_size"
+                            }
+                        },
+                        "ResultSelector": {
+                            "batch_index.$": "$.Payload.batch_index",
+                            "output_key.$": "$.Payload.output_key",
+                            "docs_embedded.$": "$.Payload.docs_embedded"
+                        },
+                        "Retry": [
+                            {
+                                "ErrorEquals": [
+                                    "Lambda.TooManyRequestsException",
+                                    "Lambda.ServiceException",
+                                    "States.TaskFailed"
+                                ],
+                                "IntervalSeconds": 2,
+                                "MaxAttempts": 3,
+                                "BackoffRate": 2.0
+                            }
+                        ],
+                        "Catch": [
+                            {
+                                "ErrorEquals": [
+                                    "States.ALL"
+                                ],
+                                "Next": "BatchFailed",
+                                "ResultPath": "$.error"
+                            }
+                        ],
+                        "End": true
+                    },
+                    "BatchFailed": {
+                        "Type": "Fail",
+                        "Error": "EmbedBatchFailed",
+                        "Cause": "Lambda embedding batch failed after retries"
+                    }
+                }
+            },
+            "Next": "Done"
+        },
+        "Done": {
+            "Type": "Succeed"
+        }
+    }
+}
