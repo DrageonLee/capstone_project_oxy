@@ -30,3 +30,7 @@ build/
 # ── Data (use S3 instead of git) ─────────────────────────────────
 collect_data/
 data/
+
+# ── Lambda build artifacts ────────────────────────────────────────
+ingestion/embed_lambda.zip
+ingestion/embed_lambda/package/
